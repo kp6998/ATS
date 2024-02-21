@@ -1,0 +1,245 @@
+﻿<head>
+    <link rel="shortcut icon" href="https://solace.bristlecone.com/wp-content/themes/iMagMag/solace-favicon.png">
+    <title>Candidates List</title>
+
+    <!--Bootstarp-->
+    <link href="~/Content/Bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Content/Bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <link href="~/Content/fontawesome-free-6.2.0-web/css/all.css" rel="stylesheet" />
+
+    <!-- JavaScript Bundle with Popper -->
+    <script src="~/scripts/jquery-3.6.0.js"></script>
+    <script src="~/scripts/jquery-ui.js"></script>
+</head>
+
+<style>
+    .model {
+        width: 100%;
+        height: 100%;
+        text-align: -webkit-center;
+    }
+    .backBtn {
+        float: right;
+        font-size: 15px;
+        font-weight: bold;
+        margin: 5px;
+    }
+    .clsSort:hover {
+        cursor: pointer;
+    }
+    .clsSort {
+        color: #000000;
+        text-decoration: none;
+    }
+</style>
+
+<body>
+    <div class="model vertical-center">
+        <div class="modal-content">
+            <div class="modelHead">
+                <a class="backBtn" href="@Url.Action("Index", "Home")"><i class="fa fa-arrow-left"></i> Back to Insert candidate</a>
+                <h3>Candidates List</h3>
+            </div>
+            <div class="modelBody">
+                <table class="table" id="myTable">
+                    <thead>
+                        <tr>
+                            <th>Edit</th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th>Email</th>
+                            <th>Status<a onclick="sortTable(5)" class="clsSort"> &#8693;</a></th>
+                            <th>Remarks</th>
+                            <th>Applicant From</th>
+                            <th>HR Name <a onclick="sortTable(8)" class="clsSort"> &#8693;</a></th>
+                            @*<th>Created Date</th>*@
+                            <th>Candidate CV</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tblBody">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function sortTable(num) {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("myTable");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[num];
+                y = rows[i + 1].getElementsByTagName("TD")[num];
+                //check if the two rows should switch place:
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
+</script>
+<script>
+    var cvBytes=[], cvName=[], candId=[];
+
+    $(document).ready(function () {
+        candDetails();
+    });
+    function candDetails() {
+        var param = {
+            test:"abc"
+        }
+            $.ajax({
+            type: "POST",
+            url: "@Url.Action("CandidateDetails", "Home")",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(param),
+            success: function (data) {
+                if (data.Status == "01") {
+                    var json_data = JSON.parse(data.Message);
+                    var printTable = '';
+                    for (var i = 0; i < json_data.length; i++) {
+                        var cand_data = json_data[i];
+                        cvBytes[i] = cand_data["CV_BYTES"];
+                        cvName[i] = cand_data["CV_NAME"];
+                        candId[i] = cand_data["CANDIDATE_ID"];
+                        printTable += '<tr>';
+                        printTable += '<td class="editRow' + i + '"><a href="#" onclick="EditBtn(' + i +')" class="editBtn' + i +'"><i class="fa fa-edit"></i></a></td>';
+                        printTable += '<td>' + cand_data["CANDIDATE_ID"] + '</td>';
+                        printTable += '<td>' + cand_data["CANDIDATE_NAME"] + '</td>';
+                        printTable += '<td>' + cand_data["MOBILE"] + '</td>';
+                        printTable += '<td>' + cand_data["EMAIL"] + '</td>';
+                        printTable += '<td class="editStatus' + i + '">' + cand_data["STATUS"] + '</td>';
+                        printTable += '<td class="editRemarks' + i + '">' + cand_data["REMARKS"] + '</td>';
+                        printTable += '<td>' + cand_data["APP_FROM"] + '</td>';
+                        printTable += '<td>' + cand_data["HR_NAME"] + '</td>';
+                        //printTable += '<td>' + cand_data["CREATED_DATE"].slice(0, 10) + '</td>';
+                        printTable += '<td><a href="#" onclick="DownloadCV(' + i +')"><i class="fa fa-download"></i> Download</a></td>';
+                        printTable += '</tr>';
+                    }
+                    $('.tblBody').html(printTable);
+
+                }
+                else if (data.Status == "00") {
+                    $('#btnSubmit').prop('disabled', false);
+                    $('#duplicateMge').css('display', 'none');
+                    alert(data.Message);
+                }
+                else {
+                    alert("Unable to Check now. Please try again later.")
+                }
+            },
+                error: function (error) {
+                    alert(error);
+            }
+        });
+    }
+    function EditBtn(x) {
+        var html = '';
+        var txtStatus = $('.editBtn'+x).closest("tr").find("td:eq(5)").text();
+        var txtRemark = $('.editBtn'+x).closest("tr").find("td:eq(6)").text();
+        var html = '';
+        html += '<select class="form-control" id="inputStatus'+x+'">';
+        html += '<option value="In process">In process</option>';
+        html += '<option value="Offered">Offered</option>';
+        html += '<option value="Selected">Selected</option>';
+        html += '<option value="Backout">Backout</option>';
+        html += '<option value="Dropped">Dropped</option>';
+        html += '</select>';
+        $('.editStatus'+x).html(html);
+        $('#inputStatus'+x).val(txtStatus);
+
+        html = '';
+        html += '<input type="text" class="form-control" id="inputRemark' + x + '" placeholder="Enter Remark">';
+        $('.editRemarks'+x).html(html);
+        $('#inputRemark'+x).val(txtRemark);
+
+        html = '';
+        html += '<td>';
+        html += '<a onclick="UpdateBtn(' + x + ')" class="updateBtn' + x +'" style="padding-right: 10px;"><i class="fa fa-check"></i></a>';
+        html += '<a onclick="CancelBtn(' + x + ')" class="cancelBtn' + x +'"><i class="fa fa-times"></i></a>';
+        html += '</td>'
+        $('.editRow' + x).html(html);
+    }
+    function CancelBtn(x) {
+        candDetails();
+    }
+
+    function DownloadCV(x) {
+        var sampleArr = base64ToArrayBuffer(cvBytes[x]);
+        saveByteArray(cvName[x], sampleArr);
+    }
+    function base64ToArrayBuffer(base64) {
+        var binaryString = window.atob(base64);
+        var binaryLen = binaryString.length;
+        var bytes = new Uint8Array(binaryLen);
+        for (var i = 0; i < binaryLen; i++) {
+            var ascii = binaryString.charCodeAt(i);
+            bytes[i] = ascii;
+        }
+        return bytes;
+    }
+    function saveByteArray(reportName, byte) {
+        var blob = new Blob([byte]);
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        var fileName = reportName;
+        link.download = fileName;
+        link.click();
+    }
+        function UpdateBtn(x) {
+        var txtStatus = $('#inputStatus'+x).val();
+        var txtRemark = $('#inputRemark'+x).val();
+        var txtcandId = candId[x];
+
+        var param = {
+            txtcandId,
+            txtStatus,
+            txtRemark
+        }
+            $.ajax({
+            type: "POST",
+            url: "@Url.Action("UpdateStaus", "Home")",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(param),
+                success: function (data) {
+                    if (data.Status == "01") {
+                        candDetails();
+                        alert(data.Message);
+                    }
+                    else {
+                        alert(data.Message);
+                    }
+                },
+                error: function (error) {
+                    alert("errror while update");
+                }
+        })
+    }
+
+</script>

@@ -1,0 +1,393 @@
+﻿<head>
+    <link rel="shortcut icon" href="https://solace.bristlecone.com/wp-content/themes/iMagMag/solace-favicon.png">
+    <title>Add Candidate</title>
+
+    <!--Bootstarp-->
+    <link href="~/Content/Bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Content/Bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <link href="~/Content/fontawesome-free-6.2.0-web/css/all.css" rel="stylesheet" />
+
+    <!-- JavaScript Bundle with Popper -->
+    <script src="~/scripts/jquery-3.6.0.js"></script>
+    <script src="~/scripts/jquery-ui.js"></script>
+</head>
+
+<style>
+    body {
+        text-align: -webkit-center;
+        overflow-y: hidden;
+    }
+    .container1 {
+        box-shadow: 0px 0px 5px 0px black;
+        margin-top: 1%;
+        padding: 1%;
+    }
+    @@media (min-width: 768px) {
+        .container1 {
+            width: 45%;
+        }
+    }
+    @@media (max-width: 1000px) {
+        .container1 {
+            width: 75%;
+        }
+    }
+    .insertModel {
+        text-align: start;
+        width: 75%;
+    }
+    h1 {
+        font-size: 20px;
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+
+    img {
+        height: 40px;
+    }
+
+    .form-group {
+        padding-bottom: 7px;
+    }
+
+    #btnSubmit {
+        margin-top: 10px;
+    }
+
+    .model {
+        width: 100%;
+        height: 100%;
+        text-align: -webkit-center;
+    }
+    .modal-content {
+        width: 95%;
+        box-shadow: 0px 0px 5px 0px black;
+        padding: 5px;
+    }
+    .modelHead {
+        background: deepskyblue;
+        color: white;
+        padding: 2px 16px;
+    }
+    .close {
+        color: white;
+        float: right;
+        font-size: 25px;
+        font-weight: bold;
+    }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .vertical-center {
+        margin: 0;
+        position: absolute;
+        top: 30%;
+    }
+</style>
+
+<body>
+    <div class="container1">
+        <div class="col-md-6 insertModel">
+            <a target="_blank" href="">
+                <img alt="Getform.io Logo" src="https://solace.bristlecone.com/wp-content/themes/iMagMag/images/logo.png">
+            </a>
+            <h1 style="margin-top: 10px; margin-bottom: 10px;">Candidate Details Form</h1>
+            <div class="form-group">
+                <label for="inputName">Candidate Full Name</label>
+                <input type="text" name="fullname" class="form-control" id="inputName" placeholder="Enter Full Name">
+            </div>
+            <div class="form-group">
+                <label for="inputEmail">Email address</label>
+                <input type="email" name="email" class="form-control" onchange="checkDuplicate()" id="inputEmail" placeholder="Enter email address">
+            </div>
+            <div class="form-group">
+                <label for="inputMobile">Mobile number</label>
+                <input class="form-control" name="mobile" type="tel" onchange="checkDuplicate()" placeholder="Enter mobile number" id="inputMobile">
+                <p style="color: red; display: none; margin-bottom: 0px;" id="duplicateMge">Candidate profile found, <a onclick="openModel()" href="#">Click here</a> to view</p>
+            </div>
+            <div class="form-group">
+                <label class="mr-4">Upload your CV:</label><br />
+                <input type="file" name="file" id="inputFile">
+            </div>
+            <div class="form-group">
+                <label for="inputAppFrom">Applicant From</label>
+                <input type="text" name="applicantfrom" class="form-control" id="inputAppFrom" placeholder="Enter Applicant from">
+            </div>
+            <div class="form-group">
+                <label for="inputHRName">Select your name</label>
+                <select class="form-control" id="inputHRName">
+                    <option value="">Choose your name</option>
+                    <option value="ARATHY.M - 62864">ARATHY.M - 62864</option>
+                    <option value="PRAKASH K - 62685">PRAKASH K - 62685</option>
+                    <option value="SAVI PATHAK - 62681">SAVI PATHAK - 62681</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btnSubmit" onclick="fnSubmit()" disabled>Submit</button>
+            <p> Or <a href="@Url.Action("CandidatesList", "Home")">Go to Candidates list</a></p>
+        </div>
+    </div>
+        <div class="model vertical-center" style="display:none">
+            <div class="modal-content">
+                <div class="modelHead">
+                    <span class="close">&times;</span>
+                    <h3>Candidate Details</h3>
+                </div>
+                <div class="modelBody">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Edit</th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>Applicant From</th>
+                                <th>HR Name</th>
+                                <th>Candidate CV</th>
+                            </tr>
+                        </thead>
+                        <tbody class="tblBody">
+                            <tr>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+</body>
+
+<script>
+    function openModel() {
+        $('.model').css('display', 'block');
+        $('.container1').css('display', 'none');
+    }
+    $('.close').click(function () {
+        $('.model').css('display', 'none');
+        $('.container1').css('display', 'block');
+    });
+</script>
+
+<script>
+    var param;
+    var cvBytes, cvName, candId;
+
+    function fnSubmit() {
+
+        var strName = $('#inputName').val();
+        var strEmail = $('#inputEmail').val();
+        var strMobile = $('#inputMobile').val();
+        var strHRName = $('#inputHRName').val();
+        var strAppFrom = $('#inputAppFrom').val();
+
+        if (strName == "") {
+            alert("Enter Candidate Name");
+            return false;
+        }
+        if (strEmail == "") {
+            alert("Enter Candidate Email");
+            return false;
+        }
+        if (strMobile == "") {
+            alert("Enter Candidate Mobile number");
+            return false;
+        }
+        if ($('#inputFile')[0].files.length == 0) {
+            alert("Select candidate CV");
+            return false;
+        }
+        if (strAppFrom == ""){
+            alert("Enter Applicant from");
+            return false;
+        }
+        if (strHRName == "") {
+            alert("Select your name");
+            return false;
+        }
+
+        var formData = new FormData();
+        formData.append('file', $('#inputFile')[0].files[0]);
+        formData.append('strName', strName);
+        formData.append('strEmail', strEmail);
+        formData.append('strMobile', strMobile);
+        formData.append('strHRName', strHRName);
+        formData.append('strAppFrom', strAppFrom);
+
+        var Credentials = "@Url.Action("InsertCandidate", "Home")";
+        $.ajax({
+            type: "POST",
+            url: Credentials,
+            data: formData,
+            dataType: "json",
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                if (data.Status == "01") {
+                    alert(data.Message);
+                    window.location.href = "@Url.Action("Index", "Home")";
+                }
+                else if (data.Status == "00") {
+                    alert(data.Message);
+                }
+                else {
+                    alert("Unable to Insert now. Please try again later.")
+                }
+            },
+            error: function (ex) {
+                alert("Unable to connect remote server.")
+            }
+        });
+    }
+
+    function checkDuplicate() {
+        var strMobile = $('#inputMobile').val();
+        var strEmail = $('#inputEmail').val();
+
+        if (strEmail == "" && strMobile == "") {
+            return false;
+        }
+        param = {
+            strMobile,
+            strEmail
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("checkDuplicate", "Home")",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(param),
+            success: function (data) {
+                if (data.Status == "01") {
+                    $('#duplicateMge').css('display', 'block');
+                    $('#btnSubmit').prop('disabled', true);
+
+                    var json_data = JSON.parse(data.Message);
+                    var cand_data = json_data[0];
+                    //alert(cand_data["CANDIDATE_NAME"]);
+                    cvBytes = cand_data["CV_BYTES"];
+                    cvName = cand_data["CV_NAME"];
+                    candId = cand_data["CANDIDATE_ID"];
+                    var printTable = '';
+                    printTable += '<tr>';
+                    printTable += '<td class="editRow"><a href="#" onclick="EditBtn()" class="editBtn"><i class="fa fa-edit"></i></a></td>';
+                    printTable += '<td class="nr">' + cand_data["CANDIDATE_ID"] +'</td>';
+                    printTable += '<td>' + cand_data["CANDIDATE_NAME"] +'</td>';
+                    printTable += '<td>' + cand_data["MOBILE"] +'</td>';
+                    printTable += '<td>' + cand_data["EMAIL"] +'</td>';
+                    printTable += '<td class="editStatus">' + cand_data["STATUS"] + '</td>';
+                    printTable += '<td class="editRemarks">' + cand_data["REMARKS"] + '</td>';
+                    printTable += '<td>' + cand_data["APP_FROM"] + '</td>';
+                    printTable += '<td>' + cand_data["HR_NAME"] +'</td>';
+                    printTable += '<td><a href="#" onclick="DownloadCV()"><i class="fa fa-download"></i> Download</a></td>';
+                    printTable += '</tr>';
+                    $('.tblBody').html(printTable);
+
+                }
+                else if (data.Status == "00") {
+                    $('#btnSubmit').prop('disabled', false);
+                    $('#duplicateMge').css('display', 'none');
+                    //alert(data.Message);
+                }
+                else {
+                    alert("Unable to Check now. Please try again later.")
+                }
+            },
+            error: function (error) {
+                alert("errror");
+            }
+        });
+    }
+
+
+    function DownloadCV() {
+        var sampleArr = base64ToArrayBuffer(cvBytes);
+        saveByteArray(cvName, sampleArr);
+    }
+    function base64ToArrayBuffer(base64) {
+        var binaryString = window.atob(base64);
+        var binaryLen = binaryString.length;
+        var bytes = new Uint8Array(binaryLen);
+        for (var i = 0; i < binaryLen; i++) {
+            var ascii = binaryString.charCodeAt(i);
+            bytes[i] = ascii;
+        }
+        return bytes;
+    }
+    function saveByteArray(reportName, byte) {
+        var blob = new Blob([byte]);
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        var fileName = reportName;
+        link.download = fileName;
+        link.click();
+    }
+
+    function EditBtn() {
+        var txtStatus = $('.editBtn').closest("tr").find("td:eq(5)").text();
+        var txtRemark = $('.editBtn').closest("tr").find("td:eq(6)").text();
+        var html = '';
+        html += '<select class="form-control" id="inputStatus">';
+        html += '<option value="In process">In process</option>';
+        html += '<option value="Offered">Offered</option>';
+        html += '<option value="Selected">Selected</option>';
+        html += '<option value="Backout">Backout</option>';
+        html += '<option value="Dropped">Dropped</option>';
+        html += '</select>';
+        $('.editStatus').html(html);
+        $('#inputStatus').val(txtStatus);
+
+        html = '';
+        html += '<input type="text" class="form-control" id="inputRemark" placeholder="Enter Remark">';
+        $('.editRemarks').html(html);
+        $('#inputRemark').val(txtRemark);
+
+        html = '';
+        html += '<td>';
+        html += '<a onclick="UpdateBtn()" class="updateBtn" style="padding-right: 10px;"><i class="fa fa-check"></i></a>';
+        html += '<a onclick="CancelBtn()" class="cancelBtn"><i class="fa fa-times"></i></a>';
+        html += '</td>'
+        $('.editRow').html(html);
+    }
+    function CancelBtn() {
+        checkDuplicate();
+    }
+
+    function UpdateBtn() {
+        var txtStatus = $('#inputStatus').val();
+        var txtRemark = $('#inputRemark').val();
+        var txtcandId = candId;
+
+        var param = {
+            txtcandId,
+            txtStatus,
+            txtRemark
+        }
+            $.ajax({
+            type: "POST",
+            url: "@Url.Action("UpdateStaus", "Home")",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(param),
+                success: function (data) {
+                    if (data.Status == "01") {
+                        checkDuplicate();
+                        alert(data.Message);
+                    }
+                    else {
+                        alert(data.Message);
+                    }
+                },
+                error: function (error) {
+                    alert("errror while update");
+                }
+        })
+    }
+</script>
+
